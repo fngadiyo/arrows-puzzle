@@ -356,33 +356,38 @@
             let bestArrows = [];
             let bestFilled = 0;
 
-            const DIRS = [[1,0],[-1,0],[0,1],[0,-1]];
             const MAX_ARROW_LENGTH = 10;
-            const MAX_GENERATION_ATTEMPTS = 35;
+            const MAX_GENERATION_ATTEMPTS = 20;
             const TARGET_DENSITY = 0.97;
 
-            function shuffle(arr) {
-                for (let i = arr.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [arr[i], arr[j]] = [arr[j], arr[i]];
+            // Random-walk DFS that produces curved/winding paths through free cells.
+            // localTemp must have 1 for occupied/visited, 0 for free.
+            function traceWalk(sx, sy, localTemp, limit) {
+                const path = [];
+                function dfs(x, y) {
+                    localTemp[y][x] = 1;
+                    path.push({x, y});
+                    if (path.length >= limit) return;
+                    const dirs = [[0,1],[0,-1],[1,0],[-1,0]].sort(() => Math.random() - 0.5);
+                    for (const [dx, dy] of dirs) {
+                        const nx = x + dx, ny = y + dy;
+                        if (isInside(nx, ny) && localTemp[ny][nx] === 0) {
+                            dfs(nx, ny);
+                            return;
+                        }
+                    }
                 }
-                return arr;
+                dfs(sx, sy);
+                return path;
             }
 
-            // Pure reverse-generation: each arrow's exit ray is clear of all
-            // previously placed arrows, so the puzzle is always solvable in
-            // reverse placement order (last placed = first to escape).
             function generateOnce() {
                 const occ = new Int16Array(cols * rows).fill(-1);
                 const arrows = [];
 
-                // Collect all mask cells in random order
-                const cells = [];
-                for (let y = 0; y < rows; y++)
-                    for (let x = 0; x < cols; x++)
-                        if (isInside(x, y)) cells.push([x, y]);
-                shuffle(cells);
-
+                // Returns true if the exit ray from (hx,hy) in direction (dx,dy)
+                // is completely free of placed arrows — the only invariant needed
+                // to guarantee the puzzle is always solvable (reverse-generation).
                 function exitClear(hx, hy, dx, dy) {
                     for (let s = 1; s < cols + rows; s++) {
                         const cx = hx + dx * s, cy = hy + dy * s;
@@ -392,28 +397,84 @@
                     return true;
                 }
 
-                for (const [x, y] of cells) {
-                    if (occ[y * cols + x] !== -1) continue; // already a body cell
-
-                    const dirs = shuffle([...DIRS]);
-                    for (const [dx, dy] of dirs) {
-                        if (!exitClear(x, y, dx, dy)) continue;
-
-                        // Extend body backward as far as possible (max 10 cells)
-                        const body = [{x, y}];
-                        let bx = x - dx, by = y - dy;
-                        while (isInside(bx, by) && occ[by * cols + bx] === -1 && body.length < MAX_ARROW_LENGTH) {
-                            body.push({x: bx, y: by});
-                            bx -= dx; by -= dy;
+                // Returns true if any body cell lies directly in the arrow's own exit ray
+                // (would cause the arrow to hit itself immediately).
+                function isSelfBlocking(path, hx, hy, dx, dy) {
+                    for (let s = 1; s < cols + rows; s++) {
+                        const cx = hx + dx * s, cy = hy + dy * s;
+                        if (!isInside(cx, cy)) break;
+                        for (let i = 1; i < path.length; i++) {
+                            if (path[i].x === cx && path[i].y === cy) return true;
                         }
-                        if (body.length < 2) continue;
+                    }
+                    return false;
+                }
 
+                // Try both orientations of a curved path. Accept the first that passes
+                // the solvability constraints.
+                function tryPlace(path) {
+                    for (const doReverse of [false, true]) {
+                        const testPath = doReverse ? [...path].reverse() : [...path];
+                        if (testPath.length < 2) continue;
+                        const head = testPath[0], neck = testPath[1];
+                        const dx = Math.sign(head.x - neck.x), dy = Math.sign(head.y - neck.y);
+                        if ((dx !== 0 && dy !== 0) || (dx === 0 && dy === 0)) continue;
+                        // All body cells must still be free (may have been claimed since trace)
+                        if (testPath.some(p => occ[p.y * cols + p.x] !== -1)) continue;
+                        if (isSelfBlocking(testPath, head.x, head.y, dx, dy)) continue;
+                        if (!exitClear(head.x, head.y, dx, dy)) continue;
                         const id = arrows.length;
-                        for (const p of body) occ[p.y * cols + p.x] = id;
-                        const sn = new Snake(body);
+                        for (const p of testPath) occ[p.y * cols + p.x] = id;
+                        const sn = new Snake(testPath);
                         sn.dir = {x: dx, y: dy};
                         arrows.push(sn);
-                        break;
+                        return true;
+                    }
+                    return false;
+                }
+
+                // Shuffle all free cells, then trace a curved path from each one.
+                const cells = [];
+                for (let y = 0; y < rows; y++)
+                    for (let x = 0; x < cols; x++)
+                        if (isInside(x, y)) cells.push([x, y]);
+                for (let i = cells.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [cells[i], cells[j]] = [cells[j], cells[i]];
+                }
+
+                for (const [x, y] of cells) {
+                    if (occ[y * cols + x] !== -1) continue;
+                    // Build a fresh occupancy snapshot for tracing (1 = taken / visited)
+                    const localTemp = [];
+                    for (let ry = 0; ry < rows; ry++) {
+                        localTemp.push(new Uint8Array(cols));
+                        for (let cx2 = 0; cx2 < cols; cx2++)
+                            localTemp[ry][cx2] = occ[ry * cols + cx2] !== -1 ? 1 : 0;
+                    }
+                    const limit = 2 + Math.floor(Math.random() * (MAX_ARROW_LENGTH - 1));
+                    const path = traceWalk(x, y, localTemp, limit);
+                    if (path.length >= 2) tryPlace(path);
+                }
+
+                // Pocket filler: for any remaining isolated free cells try to add a
+                // minimal 2-cell arrow so density stays as close to 100% as possible.
+                for (let y = 0; y < rows; y++) {
+                    for (let x = 0; x < cols; x++) {
+                        if (!isInside(x, y) || occ[y * cols + x] !== -1) continue;
+                        const dirs = [[1,0],[-1,0],[0,1],[0,-1]].sort(() => Math.random() - 0.5);
+                        for (const [dx, dy] of dirs) {
+                            if (!exitClear(x, y, dx, dy)) continue;
+                            const bx = x - dx, by = y - dy;
+                            if (!isInside(bx, by) || occ[by * cols + bx] !== -1) continue;
+                            const path = [{x, y}, {x: bx, y: by}];
+                            const id = arrows.length;
+                            for (const p of path) occ[p.y * cols + p.x] = id;
+                            const sn = new Snake(path);
+                            sn.dir = {x: dx, y: dy};
+                            arrows.push(sn);
+                            break;
+                        }
                     }
                 }
 
