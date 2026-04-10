@@ -5,9 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Arrows</title>
     <style>
+        :root {
+            --bg: #0f172a;
+            --bg2: #1e293b;
+            --border: #334155;
+            --text: #f8fafc;
+            --muted: #94a3b8;
+            --accent: #f59e0b;
+            --accent2: #fbbf24;
+        }
+        [data-theme="light"] {
+            --bg: #f1f5f9;
+            --bg2: #e2e8f0;
+            --border: #cbd5e1;
+            --text: #0f172a;
+            --muted: #475569;
+            --accent: #d97706;
+            --accent2: #f59e0b;
+        }
         body { 
             margin: 0; 
-            background: #0f172a; 
+            background: var(--bg); 
             display: flex; 
             flex-direction: column; 
             align-items: center; 
@@ -15,39 +33,86 @@
             height: 100vh; 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
             overflow: hidden; 
-            color: #f8fafc;
+            color: var(--text);
+            transition: background 0.3s, color 0.3s;
         }
         canvas { 
-            background: #1e293b; 
-            border: 1px solid #334155; 
+            background: var(--bg2); 
+            border: 1px solid var(--border); 
             cursor: crosshair; 
             touch-action: none; 
             image-rendering: pixelated; 
             border-radius: 8px;
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
         }
-        .ui { margin-bottom: 20px; }
-        button { 
-            padding: 10px 24px; 
+        .ui { 
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        button, select { 
+            padding: 10px 18px; 
             font-weight: bold; 
-            font-size: 14px;
+            font-size: 13px;
             text-transform: uppercase;
             letter-spacing: 0.05em;
             cursor: pointer; 
-            background: #f59e0b; 
-            color: #0f172a; 
+            background: var(--accent); 
+            color: var(--bg); 
             border: none; 
             border-radius: 6px; 
             transition: all 0.2s ease;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+            font-family: inherit;
+            outline: none;
         }
-        button:hover {
-            background: #fbbf24;
+        button:hover, select:hover {
+            background: var(--accent2);
             transform: translateY(-1px);
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
         }
-        button:active {
+        button:active, select:active {
             transform: translateY(0);
+        }
+        #loadingOverlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            backdrop-filter: blur(8px);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+        .overlay-title {
+            font-size: 24px;
+            font-weight: 900;
+            color: var(--accent);
+            margin-bottom: 12px;
+            letter-spacing: 0.1em;
+        }
+        .overlay-text {
+            font-size: 14px;
+            color: var(--muted);
+            font-family: monospace;
+        }
+        .overlay-bar-bg {
+            margin-top: 20px;
+            width: 200px;
+            height: 2px;
+            background: var(--bg2);
+            border-radius: 1px;
+            overflow: hidden;
+        }
+        #progressBar {
+            width: 0%;
+            height: 100%;
+            background: var(--accent);
+            transition: width 0.3s ease;
         }
     </style>
 </head>
@@ -65,12 +130,13 @@
             <option value="🌲">TREE</option>
             <option value="🚀">ROCKET</option>
         </select>
+        <button id="themeBtn" onclick="cycleTheme()" title="Toggle theme" aria-label="Toggle theme" aria-live="polite">AUTO</button>
     </div>
-    <div id="loadingOverlay" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15, 23, 42, 0.8); backdrop-filter: blur(8px); display:none; flex-direction:column; align-items:center; justify-content:center; z-index:100;">
-        <div style="font-size:24px; font-weight:900; color:#f59e0b; margin-bottom:12px; letter-spacing:0.1em;">GENERATING...</div>
-        <div id="progressText" style="font-size:14px; color:#94a3b8; font-family:monospace;">Wait a moment</div>
-        <div style="margin-top:20px; width:200px; height:2px; background:#1e293b; border-radius:1px; overflow:hidden;">
-            <div id="progressBar" style="width:0%; height:100%; background:#f59e0b; transition: width 0.3s ease;"></div>
+    <div id="loadingOverlay">
+        <div class="overlay-title">GENERATING...</div>
+        <div id="progressText" class="overlay-text">Wait a moment</div>
+        <div class="overlay-bar-bg">
+            <div id="progressBar"></div>
         </div>
     </div>
     <canvas id="mazeCanvas"></canvas>
@@ -85,6 +151,45 @@
     canvas.width = cols * cellSize;
     canvas.height = rows * cellSize;
 
+    // --- THEME ---
+    const DARK_COLORS = {
+        bg: '#0f172a', canvasBg: '#1e293b', arrow: '#f8fafc',
+        arrowHit: '#cc8800', dot: 'rgba(245,158,11,0.35)', win: '#f59e0b',
+        gradInner: '#1e293b', gradOuter: '#0f172a', overlayBg: 'rgba(15,23,42,0.85)'
+    };
+    const LIGHT_COLORS = {
+        bg: '#f1f5f9', canvasBg: '#e2e8f0', arrow: '#334155',
+        arrowHit: '#b45309', dot: 'rgba(180,83,9,0.3)', win: '#d97706',
+        gradInner: '#e2e8f0', gradOuter: '#f1f5f9', overlayBg: 'rgba(241,245,249,0.9)'
+    };
+    let C = DARK_COLORS;
+    let currentTheme = 'system';
+
+    function applyTheme(theme) {
+        currentTheme = theme;
+        const resolved = theme === 'system'
+            ? (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark')
+            : theme;
+        document.documentElement.setAttribute('data-theme', resolved);
+        C = resolved === 'light' ? LIGHT_COLORS : DARK_COLORS;
+        document.getElementById('loadingOverlay').style.background = C.overlayBg;
+        for (const s of segments) { if (!s.isRetracting) s.color = C.arrow; }
+        preRenderDots();
+        const icons = { system: 'AUTO', light: '☀', dark: '🌙' };
+        document.getElementById('themeBtn').textContent = icons[theme];
+    }
+
+    function cycleTheme() {
+        const order = ['system', 'light', 'dark'];
+        currentTheme = order[(order.indexOf(currentTheme) + 1) % order.length];
+        localStorage.setItem('arrowsTheme', currentTheme);
+        applyTheme(currentTheme);
+    }
+
+    window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {
+        if (currentTheme === 'system') applyTheme('system');
+    });
+
     let segments = [];
     let isWin = false;
     let shapeMode = 'circle'; 
@@ -93,8 +198,8 @@
     function onShapeChange() {
         shapeMode = document.getElementById('shapeSelector').value;
         buildShapeMask();
+        applyTheme(currentTheme);
         initGame();
-        preRenderDots(); 
     }
 
     function buildShapeMask() {
@@ -172,7 +277,7 @@
             this.isRetracting = false;
             this.moveProgress = 0;
             this.speed = 0.85; 
-            this.color = "#f8fafc";
+            this.color = C.arrow;
         }
         getDirKey() {
             if (this.dir.x > 0) return 0; if (this.dir.y > 0) return 1;
@@ -213,7 +318,7 @@
             if (this.isRetracting) {
                 this.moveProgress -= this.speed * 1.5;
                 if (this.moveProgress <= 0) {
-                    this.moveProgress = 0; this.isRetracting = false; this.color = "#f8fafc";
+                    this.moveProgress = 0; this.isRetracting = false; this.color = C.arrow;
                     if (this.startPoints) { this.points = JSON.parse(JSON.stringify(this.startPoints)); this.startPoints = null; this.updateDirection(); }
                 }
                 return;
@@ -229,7 +334,7 @@
                         for (let p of s.points) if (p.x === nx && p.y === ny) hit = true; 
                     }
                 }
-                if (hit) { this.isMoving = false; this.isRetracting = true; this.color = "#cc8800"; return; }
+                if (hit) { this.isMoving = false; this.isRetracting = true; this.color = C.arrowHit; return; }
                 this.moveProgress = 0; this.points.unshift({ x: nx, y: ny }); this.points.pop(); this.updateDirection();
                 if (this.points.every(p => p.x < 0 || p.x >= cols || p.y < 0 || p.y >= rows)) {
                     segments = segments.filter(s => s !== this);
@@ -242,242 +347,93 @@
     function generateAsync(onComplete) {
         document.getElementById('loadingOverlay').style.display = 'flex';
         document.getElementById('progressBar').style.width = '0%';
-        document.getElementById('progressText').innerText = `Structuring perfect logic...`;
+        document.getElementById('progressText').innerText = 'Generating puzzle...';
 
         setTimeout(() => {
-            let bestLocal = [];
-            let bestDensity = 0;
-            
-            let totalActiveMask = 0;
-            for (let m of maskGrid) if (m === 1) totalActiveMask++;
+            let totalMask = 0;
+            for (const m of maskGrid) if (m === 1) totalMask++;
 
-            // Run more attempts to find 90%+ density configuration
-            for (let attempt = 0; attempt < 150; attempt++) {
-                const grid = Array.from({ length: rows }, () => new Uint8Array(cols).fill(1));
-                
-                function carve(x, y) {
-                    grid[y][x] = 0;
-                    const dirs = [[0, 1], [0, -1], [1, 0], [-1, 0]].sort(() => Math.random() - 0.5);
-                    for (let [dx, dy] of dirs) {
-                        const nx = x + dx, ny = y + dy;
-                        if (isInside(nx, ny) && grid[ny][nx] === 1) {
-                            const centerX = (cols - 1) / 2;
-                            const isEdge = !isInside(nx + dx, ny + dy);
-                            if (isEdge && Math.random() < 0.85) continue;
-                            carve(nx, ny);
-                        }
-                    }
+            let bestArrows = [];
+            let bestFilled = 0;
+
+            const DIRS = [[1,0],[-1,0],[0,1],[0,-1]];
+            const MAX_ARROW_LENGTH = 10;
+            const MAX_GENERATION_ATTEMPTS = 35;
+            const TARGET_DENSITY = 0.97;
+
+            function shuffle(arr) {
+                for (let i = arr.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [arr[i], arr[j]] = [arr[j], arr[i]];
                 }
-                
-                for(let i=0; i<30; i++) {
-                    let rx = Math.floor(Math.random() * cols);
-                    let ry = Math.floor(Math.random() * rows);
-                    if (isInside(rx, ry)) carve(rx, ry);
-                }
+                return arr;
+            }
 
-                let tempGrid = grid.map(r => [...r]);
-                let paths = [];
-                for (let y = 0; y < rows; y++) {
-                    for (let x = 0; x < cols; x++) {
-                        if (isInside(x, y) && tempGrid[y][x] === 0) {
-                            let path = [];
-                            let limit = 4 + Math.floor(Math.random() * 7); // 4-10 cells for 25x25
-                            trace(x, y, tempGrid, path, limit);
-                            if (path.length > 2) {
-                                paths.push(path);
-                            }
-                        }
-                    }
-                }
+            // Pure reverse-generation: each arrow's exit ray is clear of all
+            // previously placed arrows, so the puzzle is always solvable in
+            // reverse placement order (last placed = first to escape).
+            function generateOnce() {
+                const occ = new Int16Array(cols * rows).fill(-1);
+                const arrows = [];
 
-                // Sort by distance to actual mask center
-                let midX = 0, midY = 0, mCount = 0;
-                for(let i=0; i<cols*rows; i++) if(maskGrid[i]) { midX += i%cols; midY += Math.floor(i/cols); mCount++; }
-                const mx = midX / mCount, my = midY / mCount;
+                // Collect all mask cells in random order
+                const cells = [];
+                for (let y = 0; y < rows; y++)
+                    for (let x = 0; x < cols; x++)
+                        if (isInside(x, y)) cells.push([x, y]);
+                shuffle(cells);
 
-                paths.forEach(p => {
-                    let sumX = 0, sumY = 0;
-                    for (let pt of p) { sumX += pt.x; sumY += pt.y; }
-                    const cx = sumX / p.length, cy = sumY / p.length;
-                    const distToCenter = (cx - mx)**2 + (cy - my)**2;
-                    p.sortKey = distToCenter + Math.random() * 20; 
-                });
-                paths.sort((a, b) => a.sortKey - b.sortKey);
-
-                let local = [];
-                let occupiedGrid = new Int16Array(cols * rows).fill(-1);
-
-                function isSelfBlocking(path, dx, dy) {
-                    const head = path[0];
-                    for (let step = 1; step < cols + rows; step++) {
-                        const cx = head.x + dx * step, cy = head.y + dy * step;
-                        if (!isInside(cx, cy)) break;
-                        for (let i = 1; i < path.length; i++) {
-                            if (path[i].x === cx && path[i].y === cy) return true;
-                        }
-                    }
-                    return false;
-                }
-
-                function checkConsecutiveLimit(head, dx, dy, maxLimit) {
-                    let queueSnakes = new Set();
-                    queueSnakes.add(-1); 
-
-                    // Scan FORWARDS
-                    for (let step = 1; step < cols + rows; step++) {
-                        const cx = head.x + dx * step, cy = head.y + dy * step;
-                        if (!isInside(cx, cy)) break;
-                        const id = occupiedGrid[cy * cols + cx];
-                        if (id !== -1) {
-                            if (local[id].dir.x === dx && local[id].dir.y === dy) queueSnakes.add(id);
-                            else break;
-                        }
-                    }
-
-                    // Scan BACKWARDS
-                    for (let step = 1; step < cols + rows; step++) {
-                        const cx = head.x - dx * step, cy = head.y - dy * step;
-                        if (!isInside(cx, cy)) break;
-                        const id = occupiedGrid[cy * cols + cx];
-                        if (id !== -1) {
-                            if (local[id].dir.x === dx && local[id].dir.y === dy) queueSnakes.add(id);
-                            else break;
-                        }
-                    }
-                    return queueSnakes.size <= maxLimit;
-                }
-
-                function checkDirectionalClump(head, dx, dy, radius, maxLimit) {
-                    let count = 0;
-                    for (let s of local) {
-                        if (s.dir.x === dx && s.dir.y === dy) {
-                            const dist = Math.hypot(s.points[0].x - head.x, s.points[0].y - head.y);
-                            if (dist <= radius) {
-                                count++;
-                                if (count >= maxLimit) return false;
-                            }
-                        }
+                function exitClear(hx, hy, dx, dy) {
+                    for (let s = 1; s < cols + rows; s++) {
+                        const cx = hx + dx * s, cy = hy + dy * s;
+                        if (!isInside(cx, cy)) return true;
+                        if (occ[cy * cols + cx] !== -1) return false;
                     }
                     return true;
                 }
 
-                function tryPlace(path, reverse) {
-                    let testPath = path.map(p => ({x: p.x, y: p.y}));
-                    if (reverse) testPath.reverse();
-                    
-                    const head = testPath[0], neck = testPath[1];
-                    const dx = Math.sign(head.x - neck.x), dy = Math.sign(head.y - neck.y);
-                    
-                    if (dx !== 0 && dy !== 0) return false;
-                    if (dx === 0 && dy === 0) return false;
+                for (const [x, y] of cells) {
+                    if (occ[y * cols + x] !== -1) continue; // already a body cell
 
-                    if (isSelfBlocking(testPath, dx, dy)) return false;
-                    if (!checkConsecutiveLimit(head, dx, dy, 2)) return false;
-                    // Relax radius to 3 to allow tighter packing in custom silhouettes
-                    if (!checkDirectionalClump(head, dx, dy, 3, 2)) return false;
+                    const dirs = shuffle([...DIRS]);
+                    for (const [dx, dy] of dirs) {
+                        if (!exitClear(x, y, dx, dy)) continue;
 
-                    // Ensure exit ray is clear of ALL arrows we've already placed
-                    for (let step = 1; step < cols + rows; step++) {
-                        const cx = head.x + dx * step, cy = head.y + dy * step;
-                        if (!isInside(cx, cy)) break;
-                        if (occupiedGrid[cy * cols + cx] !== -1) return false;
-                    }
-                    
-                    let sn = new Snake(testPath);
-                    // Override direction to match test array precisely 
-                    sn.dir = {x: dx, y: dy};
-                    local.push(sn);
-                    let id = local.length - 1;
-                    
-                    // Mark body so future arrows can avoid it
-                    for (let p of testPath) {
-                        occupiedGrid[p.y * cols + p.x] = id;
-                    }
-                    return true;
-                }
-
-                for (let p of paths) {
-                    if (Math.random() > 0.5) {
-                        if (!tryPlace(p, false)) tryPlace(p, true);
-                    } else {
-                        if (!tryPlace(p, true)) tryPlace(p, false);
-                    }
-                }
-                
-                // --- POCKET FILLER ALGORITHM ---
-                // Maximize density by filling remaining free spaces that have a valid escape ray
-                for (let y = 0; y < rows; y++) {
-                    for (let x = 0; x < cols; x++) {
-                        if (isInside(x, y) && occupiedGrid[y * cols + x] === -1) {
-                            const dirs = [[0, 1], [0, -1], [1, 0], [-1, 0]].sort(() => Math.random() - 0.5);
-                            for (let [dx, dy] of dirs) {
-                                let clear = true;
-                                for (let step = 1; step < cols + rows; step++) {
-                                    const cx = x + dx * step, cy = y + dy * step;
-                                    if (!isInside(cx, cy)) break;
-                                    if (occupiedGrid[cy * cols + cx] !== -1) { clear = false; break; }
-                                }
-                                
-                                if (clear) {
-                                    if (!checkConsecutiveLimit({x, y}, dx, dy, 2)) continue;
-                                    if (!checkDirectionalClump({x, y}, dx, dy, 3, 1)) continue; // Stricter Limit (max 1 identical) for fillers locally!
-
-                                    let path = [{x, y}];
-                                    // Try to extend it opposite to exit direction for 1-3 cells
-                                    let tx = x, ty = y;
-                                    // We force at least 1 extension attempt to ensure length >= 2
-                                    let targetExtra = 1 + Math.floor(Math.random() * 3);
-                                    for(let l = 0; l < targetExtra; l++) {
-                                        tx -= dx; ty -= dy;
-                                        if (isInside(tx, ty) && occupiedGrid[ty * cols + tx] === -1) {
-                                            path.push({x: tx, y: ty});
-                                        } else break;
-                                    }
-                                    
-                                    // Strictly enforce no 1-dot arrows
-                                    if (path.length >= 2) {
-                                        for (let p of path) {
-                                            occupiedGrid[p.y * cols + p.x] = local.length;
-                                        }
-                                        let sn = new Snake(path);
-                                        sn.dir = {x: dx, y: dy};
-                                        local.push(sn);
-                                        break;
-                                    }
-                                }
-                            }
+                        // Extend body backward as far as possible (max 10 cells)
+                        const body = [{x, y}];
+                        let bx = x - dx, by = y - dy;
+                        while (isInside(bx, by) && occ[by * cols + bx] === -1 && body.length < MAX_ARROW_LENGTH) {
+                            body.push({x: bx, y: by});
+                            bx -= dx; by -= dy;
                         }
+                        if (body.length < 2) continue;
+
+                        const id = arrows.length;
+                        for (const p of body) occ[p.y * cols + p.x] = id;
+                        const sn = new Snake(body);
+                        sn.dir = {x: dx, y: dy};
+                        arrows.push(sn);
+                        break;
                     }
                 }
 
-                let filledCells = 0;
-                for (let cell of occupiedGrid) {
-                    if (cell !== -1) filledCells++;
-                }
+                let filled = 0;
+                for (const v of occ) if (v !== -1) filled++;
+                return { arrows, filled };
+            }
 
-                if (filledCells > bestDensity) {
-                    bestDensity = filledCells;
-                    bestLocal = local;
+            for (let attempt = 0; attempt < MAX_GENERATION_ATTEMPTS; attempt++) {
+                const { arrows, filled } = generateOnce();
+                if (filled > bestFilled) {
+                    bestFilled = filled;
+                    bestArrows = arrows;
                 }
+                if (bestFilled >= Math.floor(totalMask * TARGET_DENSITY)) break;
             }
 
             document.getElementById('loadingOverlay').style.display = 'none';
-            onComplete(bestLocal);
-            
+            onComplete(bestArrows);
         }, 50);
-    }
-
-    function trace(x, y, temp, path, limit) {
-        temp[y][x] = 1; path.push({x, y});
-        if (path.length >= limit) return;
-        const dirs = [[0, 1], [0, -1], [1, 0], [-1, 0]].sort(() => Math.random() - 0.5);
-        for (let [dx, dy] of dirs) {
-            const nx = x + dx, ny = y + dy;
-            if (isInside(nx, ny) && temp[ny][nx] === 0) { 
-                trace(nx, ny, temp, path, limit); 
-                return; 
-            }
-        }
     }
 
     let dotsCanvas = null;
@@ -485,17 +441,14 @@
         if (!dotsCanvas) dotsCanvas = document.createElement('canvas');
         dotsCanvas.width = canvas.width; dotsCanvas.height = canvas.height;
         const dctx = dotsCanvas.getContext('2d');
-        dctx.fillStyle = "rgba(245, 158, 11, 0.35)"; 
+        dctx.clearRect(0, 0, dotsCanvas.width, dotsCanvas.height);
+        dctx.fillStyle = C.dot;
         for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
             if (isInside(c, r)) {
                 dctx.beginPath(); dctx.arc(c * cellSize + cellSize/2, r * cellSize + cellSize/2, 1, 0, Math.PI * 2); dctx.fill();
             }
         }
     }
-    preRenderDots(); // Initialize immediately on startup
-
-
-
     function initGame() { 
         isWin = false; 
         generateAsync(newSegments => {
@@ -516,7 +469,7 @@
     });
 
     function loop() {
-        ctx.fillStyle = "#0f172a";
+        ctx.fillStyle = C.bg;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         // Build Clipping Path from mask
@@ -537,8 +490,8 @@
             const centerY = canvas.height / 2;
             const radius = canvas.width / 2;
             const grad = ctx.createRadialGradient(centerX - radius*0.3, centerY - radius*0.3, radius*0.1, centerX, centerY, radius);
-            grad.addColorStop(0, '#1e293b');
-            grad.addColorStop(1, '#0f172a');
+            grad.addColorStop(0, C.gradInner);
+            grad.addColorStop(1, C.gradOuter);
             ctx.fillStyle = grad;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
@@ -549,7 +502,7 @@
         ctx.restore();
         
         if (isWin) { 
-            ctx.fillStyle = "#f59e0b"; ctx.font = "900 36px sans-serif"; 
+            ctx.fillStyle = C.win; ctx.font = "900 36px sans-serif"; 
             ctx.textAlign = "center"; 
             ctx.shadowBlur = 15; ctx.shadowColor = "rgba(245, 158, 11, 0.5)";
             ctx.fillText("YOU WIN!", canvas.width/2, canvas.height/2); 
@@ -559,6 +512,7 @@
     }
 
     buildShapeMask(); // Initial mask load
+    applyTheme(localStorage.getItem('arrowsTheme') || 'system');
     initGame();
     loop();
 </script>
