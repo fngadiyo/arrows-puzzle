@@ -360,6 +360,15 @@
             const MAX_GENERATION_ATTEMPTS = 20;
             const TARGET_DENSITY = 0.97;
 
+            // Proper Fisher-Yates shuffle (in-place).
+            function fisherYates(arr) {
+                for (let i = arr.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [arr[i], arr[j]] = [arr[j], arr[i]];
+                }
+                return arr;
+            }
+
             // Random-walk DFS that produces curved/winding paths through free cells.
             // localTemp must have 1 for occupied/visited, 0 for free.
             function traceWalk(sx, sy, localTemp, limit) {
@@ -368,7 +377,7 @@
                     localTemp[y][x] = 1;
                     path.push({x, y});
                     if (path.length >= limit) return;
-                    const dirs = [[0,1],[0,-1],[1,0],[-1,0]].sort(() => Math.random() - 0.5);
+                    const dirs = fisherYates([[0,1],[0,-1],[1,0],[-1,0]]);
                     for (const [dx, dy] of dirs) {
                         const nx = x + dx, ny = y + dy;
                         if (isInside(nx, ny) && localTemp[ny][nx] === 0) {
@@ -400,12 +409,11 @@
                 // Returns true if any body cell lies directly in the arrow's own exit ray
                 // (would cause the arrow to hit itself immediately).
                 function isSelfBlocking(path, hx, hy, dx, dy) {
+                    const bodySet = new Set(path.slice(1).map(p => p.y * cols + p.x));
                     for (let s = 1; s < cols + rows; s++) {
                         const cx = hx + dx * s, cy = hy + dy * s;
                         if (!isInside(cx, cy)) break;
-                        for (let i = 1; i < path.length; i++) {
-                            if (path[i].x === cx && path[i].y === cy) return true;
-                        }
+                        if (bodySet.has(cy * cols + cx)) return true;
                     }
                     return false;
                 }
@@ -438,10 +446,7 @@
                 for (let y = 0; y < rows; y++)
                     for (let x = 0; x < cols; x++)
                         if (isInside(x, y)) cells.push([x, y]);
-                for (let i = cells.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [cells[i], cells[j]] = [cells[j], cells[i]];
-                }
+                fisherYates(cells);
 
                 for (const [x, y] of cells) {
                     if (occ[y * cols + x] !== -1) continue;
@@ -449,8 +454,8 @@
                     const localTemp = [];
                     for (let ry = 0; ry < rows; ry++) {
                         localTemp.push(new Uint8Array(cols));
-                        for (let cx2 = 0; cx2 < cols; cx2++)
-                            localTemp[ry][cx2] = occ[ry * cols + cx2] !== -1 ? 1 : 0;
+                        for (let col = 0; col < cols; col++)
+                            localTemp[ry][col] = occ[ry * cols + col] !== -1 ? 1 : 0;
                     }
                     const limit = 2 + Math.floor(Math.random() * (MAX_ARROW_LENGTH - 1));
                     const path = traceWalk(x, y, localTemp, limit);
@@ -462,7 +467,7 @@
                 for (let y = 0; y < rows; y++) {
                     for (let x = 0; x < cols; x++) {
                         if (!isInside(x, y) || occ[y * cols + x] !== -1) continue;
-                        const dirs = [[1,0],[-1,0],[0,1],[0,-1]].sort(() => Math.random() - 0.5);
+                        const dirs = fisherYates([[1,0],[-1,0],[0,1],[0,-1]]);
                         for (const [dx, dy] of dirs) {
                             if (!exitClear(x, y, dx, dy)) continue;
                             const bx = x - dx, by = y - dy;
