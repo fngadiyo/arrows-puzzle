@@ -6,46 +6,25 @@
     <title>The Arrows</title>
     <style>
         :root {
-            --bg: #f8fafc;
-            --text: #0f172a;
-            --panel-bg: #ffffff;
-            --panel-border: #e2e8f0;
-            --muted: #64748b;
-            --accent: #6366f1;
-            --accent-hover: #4f46e5;
+            --bg: #fafafa;
+            --text: #171717;
+            --muted: #737373;
+            --accent: #171717;
             --accent-contrast: #ffffff;
-            --overlay: rgba(248, 250, 252, 0.82);
+            --border: #e5e5e5;
+            --overlay: rgba(250, 250, 250, 0.9);
             --control-bg: #ffffff;
-            --control-border: #dbe4f0;
-            --shadow: rgba(15, 23, 42, 0.10);
-        }
-        html[data-theme="light"] {
-            --bg: #f8fafc;
-            --text: #0f172a;
-            --panel-bg: #ffffff;
-            --panel-border: #e2e8f0;
-            --muted: #64748b;
-            --accent: #6366f1;
-            --accent-hover: #4f46e5;
-            --accent-contrast: #ffffff;
-            --overlay: rgba(248, 250, 252, 0.82);
-            --control-bg: #ffffff;
-            --control-border: #dbe4f0;
-            --shadow: rgba(15, 23, 42, 0.10);
+            --font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
         html[data-theme="dark"] {
-            --bg: #0f172a;
-            --text: #f8fafc;
-            --panel-bg: #1e293b;
-            --panel-border: #334155;
-            --muted: #94a3b8;
-            --accent: #f59e0b;
-            --accent-hover: #fbbf24;
-            --accent-contrast: #0f172a;
-            --overlay: rgba(15, 23, 42, 0.8);
-            --control-bg: #1e293b;
-            --control-border: #334155;
-            --shadow: rgba(0, 0, 0, 0.5);
+            --bg: #0a0a0a;
+            --text: #ededed;
+            --muted: #a1a1a1;
+            --accent: #ededed;
+            --accent-contrast: #0a0a0a;
+            --border: #262626;
+            --overlay: rgba(10, 10, 10, 0.9);
+            --control-bg: #171717;
         }
         body { 
             margin: 0; 
@@ -53,87 +32,73 @@
             display: flex; 
             flex-direction: column; 
             align-items: center; 
-            justify-content: flex-start; 
+            justify-content: center; 
             min-height: 100dvh; 
-            height: auto; 
-            padding: 12px; 
+            padding: 24px; 
             box-sizing: border-box;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-            overflow-x: hidden; 
-            overflow-y: auto; 
+            font-family: var(--font); 
             color: var(--text);
-            transition: background 0.2s ease, color 0.2s ease;
+            transition: background 0.4s ease, color 0.4s ease;
+            -webkit-font-smoothing: antialiased;
         }
         canvas { 
             background: transparent; 
-            border: 0; 
             cursor: crosshair; 
             touch-action: none; 
-            image-rendering: pixelated; 
-            border-radius: 8px;
-            box-shadow: none;
-            transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-            width: min(100%, 100vw - 24px);
-            max-width: 680px;
+            image-rendering: auto; 
+            width: min(100%, 100vw - 48px);
+            max-width: 600px;
             height: auto;
             display: block;
+            margin: 20px 0;
         }
         .ui {
-            margin-bottom: 16px;
             display: flex;
-            align-items: stretch;
-            flex-direction: column;
-            gap: 10px;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            width: 100%;
+            max-width: 600px;
         }
         button, select.control { 
-            padding: 10px 24px; 
-            font-weight: bold; 
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
+            padding: 12px 20px; 
+            font-weight: 500; 
+            font-size: 13px;
+            letter-spacing: -0.01em;
             cursor: pointer; 
-            border-radius: 16px; 
-            transition: all 0.2s ease;
-            border: 1px solid transparent;
-        }
-        button {
-            background: var(--accent); 
-            color: var(--accent-contrast); 
-            box-shadow: 0 8px 20px -10px rgba(79, 70, 229, 0.5);
-        }
-        select.control {
+            border-radius: 6px; 
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid var(--border);
+            outline: none;
             background: var(--control-bg);
             color: var(--text);
-            border-color: var(--control-border);
-            padding-right: 36px;
-            width: 100%;
+        }
+        button {
+            background: var(--accent);
+            color: var(--accent-contrast);
+            border: 1px solid var(--accent);
         }
         button:hover {
-            background: var(--accent-hover);
+            opacity: 0.9;
             transform: translateY(-1px);
-            box-shadow: 0 12px 24px -12px rgba(79, 70, 229, 0.45);
+        }
+        select.control {
+            appearance: none;
+            padding-right: 32px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23737373'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 14px;
         }
         select.control:hover {
-            border-color: var(--accent);
-        }
-        button:active {
-            transform: translateY(0);
-        }
-        #statsText {
-            margin-left: 0;
-            font-size: 12px;
-            color: var(--muted);
-            font-family: monospace;
-            text-align: left;
+            border-color: var(--muted);
         }
         #loadingOverlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            inset: 0;
             background: var(--overlay);
-            backdrop-filter: blur(8px);
+            backdrop-filter: blur(12px);
             display: none;
             flex-direction: column;
             align-items: center;
@@ -141,22 +106,16 @@
             z-index: 100;
         }
         .overlay-title {
-            font-size: 24px;
-            font-weight: 900;
-            color: var(--accent);
-            margin-bottom: 12px;
-            letter-spacing: 0.1em;
-        }
-        #progressText {
             font-size: 14px;
-            color: var(--muted);
-            font-family: monospace;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 16px;
+            letter-spacing: 0.05em;
         }
         .progress-track {
-            margin-top: 20px;
-            width: 200px;
+            width: 120px;
             height: 2px;
-            background: var(--panel-bg);
+            background: var(--border);
             border-radius: 1px;
             overflow: hidden;
         }
@@ -167,153 +126,180 @@
             transition: width 0.3s ease;
         }
         .screen {
-            width: min(100%, 760px);
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+            animation: fadeIn 0.5s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         .hidden {
             display: none !important;
         }
-        .card {
-            background: var(--panel-bg);
-            border: 1px solid var(--panel-border);
-            border-radius: 12px;
-            padding: 16px;
-            box-shadow: 0 12px 30px -18px var(--shadow);
-        }
         .title {
-            font-size: 30px;
-            font-weight: 900;
-            letter-spacing: 0.06em;
-            margin: 0 0 8px;
-            text-transform: uppercase;
-            color: var(--accent);
+            font-size: 42px;
+            font-weight: 800;
+            letter-spacing: -0.04em;
+            margin: 0 0 12px;
+            color: var(--text);
         }
         .subtitle {
-            margin: 0 0 18px;
+            margin: 0 0 32px;
             color: var(--muted);
-            font-size: 14px;
+            font-size: 15px;
+            font-weight: 400;
+            line-height: 1.5;
         }
         .hud {
             display: flex;
-            align-items: flex-start;
-            justify-content: flex-start;
-            gap: 6px;
-            flex-direction: column;
-            margin-bottom: 12px;
-            padding: 10px 12px;
-            border-radius: 10px;
-            background: var(--panel-bg);
-            border: 1px solid var(--panel-border);
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 600px;
+            margin-bottom: 24px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
         }
         .hud span {
-            font-size: 12px;
+            font-size: 13px;
+            font-weight: 500;
             color: var(--muted);
-            font-family: monospace;
+            font-variant-numeric: tabular-nums;
+        }
+        #finalScore {
+            font-size: 64px;
+            font-weight: 800;
+            letter-spacing: -0.05em;
+            margin: 24px 0;
+            color: var(--text);
         }
         #finalBreakdown {
             color: var(--muted);
-            font-family: monospace;
-            font-size: 13px;
+            font-size: 14px;
             line-height: 1.6;
-            white-space: pre-line;
-            margin: 10px 0 18px;
+            margin-bottom: 32px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            justify-content: center;
+            width: 100%;
+        }
+        .button-group button {
+            flex: 1;
+            padding: 10px 12px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            background: var(--control-bg);
+            color: var(--text);
+            border-color: var(--border);
+        }
+        .button-group button.active {
+            background: var(--accent);
+            color: var(--accent-contrast);
+            border-color: var(--accent);
+        }
+        .lives-container {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+            justify-content: center;
+        }
+        .heart {
+            width: 28px;
+            height: 28px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .heart svg {
+            width: 100%;
+            height: 100%;
+            fill: var(--text);
+            stroke: var(--text);
+            stroke-width: 2;
+        }
+        .heart.lost svg {
+            fill: transparent;
+        }
+        .label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 10px;
+            display: block;
         }
 
         @media (min-width: 720px) {
-            body {
-                justify-content: center;
-                padding: 20px;
-            }
-            .screen {
-                width: min(92vw, 760px);
-            }
-            .card {
-                padding: 22px;
-            }
-            .title {
-                font-size: 34px;
-            }
-            .ui {
-                align-items: center;
-                flex-direction: row;
-                flex-wrap: wrap;
-            }
-            button, select.control {
-                width: auto;
-            }
-            #statsText {
-                margin-left: 8px;
-            }
-            .hud {
-                align-items: center;
-                justify-content: space-between;
-                flex-direction: row;
-            }
-            canvas {
-                max-width: 680px;
-            }
+            body { justify-content: center; padding: 20px; }
+            .screen { width: min(92vw, 760px); }
+            .title { font-size: 34px; }
+            .ui { align-items: center; }
+            canvas { max-width: 680px; }
         }
     </style>
 </head>
 <body>
-    <section id="startScreen" class="screen card">
+    <section id="startScreen" class="screen">
         <h1 class="title">The Arrows</h1>
-        <p class="subtitle">Choose your setup, then clear every arrow before time runs out.</p>
-        <div class="ui">
-            <select id="shapeSelector" class="control" onchange="onShapeChange()">
-                <option value="square">SQUARE</option>
-                <option value="circle" selected>CIRCLE</option>
-                <option value="❤️">HEART</option>
-                <option value="🐘">ELEPHANT</option>
-                <option value="🐦">BIRD</option>
-                <option value="🐟">FISH</option>
-                <option value="👻">GHOST</option>
-                <option value="🌲">TREE</option>
-                <option value="🚀">ROCKET</option>
-                <option value="⭐">STAR</option>
-                <option value="🌙">MOON</option>
-                <option value="🦋">BUTTERFLY</option>
-                <option value="🐢">TURTLE</option>
-                <option value="🐱">CAT</option>
-                <option value="🐶">DOG</option>
-                <option value="🐙">OCTOPUS</option>
-                <option value="🧩">PUZZLE</option>
-                <option value="🎈">BALLOON</option>
-                <option value="🍎">APPLE</option>
-            </select>
-            <select id="themeSelector" class="control" onchange="onThemeChange()">
-                <option value="system" selected>SYSTEM</option>
-                <option value="light">LIGHT</option>
-                <option value="dark">DARK</option>
-            </select>
-            <select id="modeSelector" class="control">
-                <option value="casual" selected>CASUAL</option>
-                <option value="competitive">COMPETITIVE</option>
-            </select>
-            <button onclick="startGame()">START GAME</button>
+        <p class="subtitle">Clear every arrow to proceed.</p>
+        
+        <div style="max-width: 320px; margin: 0 auto; text-align: left;">
+            <span class="label">Choose Shape</span>
+            <div class="button-group" id="shapeGroup">
+                <button onclick="selectShape('circle')" id="btn-circle">CIRCLE</button>
+                <button onclick="selectShape('square')" id="btn-square">SQUARE</button>
+            </div>
+
+            <span class="label">Select Level</span>
+            <div class="button-group">
+                <button onclick="startGame('easy')">EASY</button>
+                <button onclick="startGame('medium')">MEDIUM</button>
+                <button onclick="startGame('hard')">HARD</button>
+                <button onclick="startGame('extreme')">EXTREME</button>
+            </div>
+            
+            <span class="label">Settings</span>
+            <div class="ui" style="gap: 8px;">
+                <select id="themeSelector" class="control" onchange="onThemeChange()" style="flex:1">
+                    <option value="system" selected>SYSTEM</option>
+                    <option value="light">LIGHT</option>
+                    <option value="dark">DARK</option>
+                </select>
+                <select id="modeSelector" class="control" style="flex:1">
+                    <option value="casual" selected>CASUAL</option>
+                    <option value="competitive">COMPETITIVE</option>
+                </select>
+            </div>
         </div>
     </section>
 
     <section id="gameScreen" class="screen hidden">
         <div class="hud">
-            <span id="hudMode">mode: casual</span>
-            <span id="hudTimer">time: --:--</span>
-            <span id="statsText">solved: 0/0 | mistakes: 0</span>
+            <span id="hudTimer">--:--</span>
+            <span id="hudMode">Casual</span>
+            <span id="statsText">Solved: 0/0</span>
         </div>
-        <div class="ui" style="margin-top:0;">
-            <button onclick="initGame()">NEW ROUND</button>
-            <button onclick="showStartMenu()">MENU</button>
+        <div id="canvasContainer" style="position:relative; overflow:hidden; border-radius:12px; border:1px solid var(--border); background:var(--bg);">
+            <canvas id="mazeCanvas" style="margin:0; width:100%"></canvas>
         </div>
-        <canvas id="mazeCanvas"></canvas>
+        <div class="lives-container" id="livesDisplay">
+            <!-- Hearts will be injected here -->
+        </div>
     </section>
 
-    <section id="resultScreen" class="screen card hidden">
-        <h2 id="finalTitle" class="title" style="font-size:28px; margin-bottom:6px;">Round Over</h2>
-        <p id="finalReason" class="subtitle">Result details</p>
-        <div id="finalScore" style="font-size:40px; font-weight:900; color:var(--accent); margin-bottom:8px;">0</div>
+    <section id="resultScreen" class="screen hidden">
+        <h2 id="finalTitle" class="title">Complete</h2>
+        <p id="finalReason" class="subtitle">Summary</p>
+        <div id="finalScore">0</div>
         <div id="finalBreakdown"></div>
         <div class="ui">
-            <button onclick="startGame()">PLAY AGAIN</button>
-            <button onclick="showStartMenu()">MAIN MENU</button>
+            <button onclick="showStartMenu()" style="width:100%; max-width:280px;">PLAY AGAIN</button>
         </div>
     </section>
 
@@ -329,8 +315,15 @@
     const canvas = document.getElementById('mazeCanvas');
     const ctx = canvas.getContext('2d');
     const cellSize = 24; 
-    const cols = 25; 
-    const rows = 25;
+    let cols = 25; 
+    let rows = 25;
+
+    const difficulties = {
+        easy: 25,
+        medium: 30,
+        hard: 35,
+        extreme: 40
+    };
     
     canvas.width = cols * cellSize;
     canvas.height = rows * cellSize;
@@ -338,7 +331,7 @@
     let segments = [];
     let isWin = false;
     let shapeMode = 'circle'; 
-    let maskGrid = new Uint8Array(cols * rows).fill(1);
+    let maskGrid = new Uint8Array(25 * 25).fill(1); // Default large enough
     let themeMode = 'system';
     let gameMode = 'casual';
     let gameState = 'menu';
@@ -348,9 +341,20 @@
     let initialArrowCount = 0;
     let solvedCount = 0;
     let mistakes = 0;
+    let lives = 3;
     let clickCount = 0;
     let boardFillPct = '0.0';
     let boardMaxBlockers = 0;
+
+    // Camera / Zoom state
+    let zoomScale = 1.0;
+    let panX = 0;
+    let panY = 0;
+    let isDragging = false;
+    let lastMousePos = { x: 0, y: 0 };
+    let pointers = new Map();
+    let initialPinchDist = 0;
+    let initialPinchScale = 1.0;
 
     const COMPETITIVE_SECONDS = 150;
 
@@ -363,24 +367,18 @@
 
     const themePalettes = {
         dark: {
-            snake: '#f8fafc',
-            blocked: '#cc8800',
-            boardBg: '#0f172a',
-            gradInner: '#1e293b',
-            gradOuter: '#0f172a',
-            dots: 'rgba(245, 158, 11, 0.35)',
-            win: '#f59e0b',
-            winGlow: 'rgba(245, 158, 11, 0.5)'
+            snake: '#ededed',
+            blocked: '#ef4444',
+            boardBg: '#0a0a0a',
+            dots: 'rgba(255, 255, 255, 0.1)',
+            win: '#ededed'
         },
         light: {
-            snake: '#0f172a',
-            blocked: '#b45309',
-            boardBg: '#f1f5f9',
-            gradInner: '#ffffff',
-            gradOuter: '#e2e8f0',
-            dots: 'rgba(180, 83, 9, 0.24)',
-            win: '#d97706',
-            winGlow: 'rgba(217, 119, 6, 0.35)'
+            snake: '#171717',
+            blocked: '#ef4444',
+            boardBg: '#fafafa',
+            dots: 'rgba(0, 0, 0, 0.1)',
+            win: '#171717'
         }
     };
 
@@ -435,7 +433,16 @@
         showScreen(startScreen);
     }
 
-    function startGame() {
+    function startGame(level) {
+        if (level) {
+            cols = difficulties[level];
+            rows = difficulties[level];
+            maskGrid = new Uint8Array(cols * rows).fill(1);
+            canvas.width = cols * cellSize;
+            canvas.height = rows * cellSize;
+            buildShapeMask();
+            preRenderDots();
+        }
         gameMode = document.getElementById('modeSelector').value;
         showScreen(gameScreen);
         initGame();
@@ -448,11 +455,30 @@
         });
     }
 
-    function onShapeChange() {
-        shapeMode = document.getElementById('shapeSelector').value;
+    function selectShape(s) {
+        shapeMode = s;
+        document.querySelectorAll('#shapeGroup button').forEach(b => b.classList.remove('active'));
+        document.getElementById(`btn-${s}`).classList.add('active');
         buildShapeMask();
-        preRenderDots(); 
-        if (gameState === 'ingame') initGame();
+        preRenderDots();
+    }
+
+    function updateLivesUI() {
+        const container = document.getElementById('livesDisplay');
+        let html = '';
+        for (let i = 0; i < 3; i++) {
+            const lost = i >= lives;
+            html += `<div class="heart ${lost ? 'lost' : ''}">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                </svg>
+            </div>`;
+        }
+        container.innerHTML = html;
+    }
+
+    function onShapeChange() {
+        // Obsolete but kept for safety during transition
     }
 
     function buildShapeMask() {
@@ -629,6 +655,12 @@
                     this.isRetracting = true;
                     this.color = activePalette.blocked;
                     mistakes++;
+                    lives--;
+                    updateLivesUI();
+                    if (lives <= 0) {
+                        endRound('failed');
+                        return;
+                    }
                     updateHud();
                     return;
                 }
@@ -822,7 +854,7 @@
                 const ny = cursor.y - dir.y;
                 if (!isCellFree(nx, ny)) break;
                 path.push({ x: nx, y: ny });
-                cursor = { x: nx, y: ny };
+                cursor = { x: neck.x, y: neck.y };
             }
 
             return path.length >= 3 ? path : null;
@@ -1076,12 +1108,14 @@
         const finalScore = Math.max(0, Math.round(raw * modeMultiplier));
 
         const reasonTextMap = {
-            solved: 'All arrows escaped. Great run!',
+            solved: 'CONGRATULATIONS! All arrows escaped.',
+            failed: 'No lives remaining. Try again!',
             stuck: 'No more valid moves. Round ended.',
             timeout: 'Timer reached zero. Round ended.'
         };
 
-        document.getElementById('finalTitle').textContent = reason === 'solved' ? 'Victory' : 'Game Over';
+        const isVictory = reason === 'solved';
+        document.getElementById('finalTitle').textContent = isVictory ? 'Victory' : 'Game Over';
         document.getElementById('finalReason').textContent = reasonTextMap[reason] || 'Round complete.';
         document.getElementById('finalScore').textContent = String(finalScore);
         document.getElementById('finalBreakdown').textContent =
@@ -1105,9 +1139,17 @@ max blockers: ${boardMaxBlockers}`;
         clickCount = 0;
         solvedCount = 0;
         initialArrowCount = 0;
+        lives = 3;
+        zoomScale = 1.0;
+        panX = 0;
+        panY = 0;
+        segments = []; 
+        boardFillPct = '0.0';
+        boardMaxBlockers = 0;
         roundStartMs = performance.now();
         timeLeftSeconds = COMPETITIVE_SECONDS;
         updateHud();
+        updateLivesUI();
 
         generateAsync(newSegments => {
             segments = newSegments && newSegments.length > 0 ? newSegments : [];
@@ -1117,10 +1159,75 @@ max blockers: ${boardMaxBlockers}`;
         });
     }
 
-    canvas.addEventListener('mousedown', e => {
-        if (gameState !== 'ingame' || roundEnded) return;
+    function getPinchDist() {
+        const pts = Array.from(pointers.values());
+        if (pts.length < 2) return 0;
+        return Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+    }
+
+    function screenToWorld(cx, cy) {
         const rect = canvas.getBoundingClientRect();
-        const mx = (e.clientX - rect.left) / (rect.width / cols), my = (e.clientY - rect.top) / (rect.height / rows);
+        // Calculate point in canvas' internal coordinate space
+        const x = (cx - rect.left) * (canvas.width / rect.width);
+        const y = (cy - rect.top) * (canvas.height / rect.height);
+        return {
+            x: (x - panX) / zoomScale,
+            y: (y - panY) / zoomScale
+        };
+    }
+
+    canvas.addEventListener('pointerdown', e => {
+        pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        if (pointers.size === 1) {
+            isDragging = true;
+            lastMousePos = { x: e.clientX, y: e.clientY };
+        } else if (pointers.size === 2) {
+            initialPinchDist = getPinchDist();
+            initialPinchScale = zoomScale;
+            isDragging = false;
+        }
+    });
+
+    canvas.addEventListener('pointermove', e => {
+        if (!pointers.has(e.pointerId)) return;
+        pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+        if (pointers.size === 1 && isDragging) {
+            const dx = e.clientX - lastMousePos.x;
+            const dy = e.clientY - lastMousePos.y;
+            // Drag sensitivity depends on zoom
+            panX += dx * (canvas.width / canvas.clientWidth);
+            panY += dy * (canvas.height / canvas.clientHeight);
+            lastMousePos = { x: e.clientX, y: e.clientY };
+        } else if (pointers.size === 2) {
+            const currentDist = getPinchDist();
+            if (initialPinchDist > 0) {
+                const factor = currentDist / initialPinchDist;
+                const newScale = Math.min(Math.max(0.5, initialPinchScale * factor), 4.0);
+                
+                // Optional: zoom toward midpoint of fingers
+                zoomScale = newScale;
+            }
+        }
+    });
+
+    canvas.addEventListener('pointerup', e => {
+        pointers.delete(e.pointerId);
+        if (pointers.size < 2) initialPinchDist = 0;
+        if (pointers.size === 0) isDragging = false;
+    });
+    canvas.addEventListener('pointercancel', e => {
+        pointers.delete(e.pointerId);
+        if (pointers.size === 0) isDragging = false;
+    });
+
+    canvas.addEventListener('click', e => {
+        if (gameState !== 'ingame' || roundEnded) return;
+        
+        const world = screenToWorld(e.clientX, e.clientY);
+        const mx = world.x / cellSize;
+        const my = world.y / cellSize;
+
         let found = null, bestDist = 0.8; 
         for(let s of segments) {
             if (s.isMoving || s.isRetracting) continue;
@@ -1147,6 +1254,10 @@ max blockers: ${boardMaxBlockers}`;
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+        ctx.save();
+        ctx.translate(panX, panY);
+        ctx.scale(zoomScale, zoomScale);
+
         // Build Clipping Path from mask
         ctx.save();
         if (shapeMode !== 'square') {
@@ -1171,13 +1282,15 @@ max blockers: ${boardMaxBlockers}`;
             }
         }
         
-        ctx.restore();
+        ctx.restore(); // end mask clip
+        ctx.restore(); // end camera transform
 
         requestAnimationFrame(loop);
     }
 
     buildShapeMask(); // Initial mask load
     applyThemeMode('system');
+    selectShape('circle'); // Set initial state
     updateHud();
     showStartMenu();
     loop();
